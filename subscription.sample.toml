@@ -92,6 +92,16 @@ query = """
 # targets = ["courgette@REALM", "radis@REALM"]
 
 
+[filter]
+operation = "Only"
+princs = ["courgette@REALM", "radis*@REALM"]
+
+[filter]
+operation = "Only"
+type = "TLSCertSubject" # KerberosPrinc, MachineID
+mode = "CaseSensitive | GlobPattern"
+targets = ["example*", ""]
+
 #
 # Outputs
 #

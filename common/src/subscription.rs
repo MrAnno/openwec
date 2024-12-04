@@ -10,6 +10,11 @@ use log::{info, warn};
 use serde::{Deserialize, Serialize};
 use strum::{AsRefStr, EnumString, VariantNames};
 use uuid::Uuid;
+<<<<<<< Updated upstream
+=======
+use glob::Pattern;
+use bitflags::bitflags;
+>>>>>>> Stashed changes
 
 use crate::utils::VersionHasher;
 
@@ -220,11 +225,16 @@ impl Display for ClientFilterOperation {
     }
 }
 
+<<<<<<< Updated upstream
 impl FromStr for ClientFilterOperation {
+=======
+impl FromStr for PrincsFilterOperation {
+>>>>>>> Stashed changes
     type Err = Error;
 
     fn from_str(op: &str) -> std::result::Result<Self, Self::Err> {
         if op.eq_ignore_ascii_case("only") {
+<<<<<<< Updated upstream
             return Ok(ClientFilterOperation::Only);
         }
 
@@ -233,10 +243,36 @@ impl FromStr for ClientFilterOperation {
         }
 
         bail!("Could not parse client filter operation")
+=======
+            return Ok(PrincsFilterOperation::Only);
+        }
+
+        if op.eq_ignore_ascii_case("except") {
+            return Ok(PrincsFilterOperation::Except);
+        }
+
+        bail!("Could not parse principal filter operation")
     }
 }
 
 #[derive(Debug, Clone, Eq, PartialEq)]
+pub enum MachineFilterType {
+    KerberosPrinc,
+    TLSCertSubject,
+    MachineID,
+}
+
+bitflags! {
+    #[derive(Debug, Clone, Eq, PartialEq, Serialize, Deserialize)]
+    pub struct MachineFilterFlags: u32 {
+        const CaseSensitive = 1 << 0;
+        const GlobPattern = 1 << 1;
+>>>>>>> Stashed changes
+    }
+}
+
+#[derive(Debug, Clone, Eq, PartialEq)]
+<<<<<<< Updated upstream
 pub struct ClientFilter {
     operation: ClientFilterOperation,
     targets: HashSet<String>,
@@ -258,6 +294,47 @@ impl ClientFilter {
     }
 
     pub fn eval(&self, target: &str) -> bool {
+=======
+pub struct PrincsFilter {
+    operation: PrincsFilterOperation,
+    mode: MachineFilterFlags,
+    targets: HashSet<String>,
+}
+
+fn has_wildcard(s: &str) -> bool {
+    s.chars().any(|c| c == '*' || c == '?')
+}
+
+impl PrincsFilter {
+    pub fn new(operation: PrincsFilterOperation, mode: MachineFilterFlags, targets: HashSet<String>) -> Self {
+        Self { operation, mode, targets }
+    }
+
+    pub fn from(operation: String, mode: String, targets: Option<String>) -> Result<Self> {
+        let operation = operation.parse()?;
+        let mode = bitflags::parser::from_str_strict(&mode)?;
+
+        let Some(targets) = targets else {
+            return Ok(PrincsFilter {
+                operation,
+                mode,
+                targets: HashSet::new(),
+            });
+        };
+
+        Ok(PrincsFilter {
+            operation,
+            mode,
+            targets: HashSet::from_iter(targets.split(',').map(|s| s.to_string()))
+        })
+    }
+
+    fn matches(&self, target: &str) -> bool {
+        self.targets.contains(target)
+    }
+
+    pub fn eval(&self, principal: &str) -> bool {
+>>>>>>> Stashed changes
         match self.operation {
             ClientFilterOperation::Only => self.targets.contains(target),
             ClientFilterOperation::Except => !self.targets.contains(target),
