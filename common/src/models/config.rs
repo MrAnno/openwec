@@ -182,14 +182,22 @@ struct ClientFilter {
     pub kind: crate::subscription::ClientFilterType,
     #[serde(default)]
     pub flags: crate::subscription::ClientFilterFlags,
-    #[serde(alias = "cert_subjects", alias = "princs")]
+    #[serde(default)]
     pub targets: HashSet<String>,
+
+    #[deprecated(since = "0.4.0", note = "Only for backward compatibility. Use targets instead")]
+    pub princs: Option<HashSet<String>>,
 }
 
 impl TryFrom<ClientFilter> for crate::subscription::ClientFilter {
     type Error = anyhow::Error;
 
     fn try_from(value: ClientFilter) -> std::prelude::v1::Result<Self, Self::Error> {
+        #[allow(deprecated)]
+        if let Some(princs) = value.princs {
+            return Ok(crate::subscription::ClientFilter::new_legacy(value.operation.into(), princs));
+        }
+
         crate::subscription::ClientFilter::try_new(value.operation.into(), value.kind, value.flags, value.targets)
     }
 }
